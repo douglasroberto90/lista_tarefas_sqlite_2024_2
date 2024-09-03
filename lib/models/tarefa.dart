@@ -1,14 +1,9 @@
 class Tarefa{
 
-  Tarefa({required this.nome, required this.realizado});
+  Tarefa({this.id, required this.nome, required this.realizado});
 
+  int? id;
   String nome;
   bool realizado;
 
-  Map<String, dynamic> toJson (){
-    return {
-      "nome": nome,
-      "realizado":realizado,
-    };
-  }
 }

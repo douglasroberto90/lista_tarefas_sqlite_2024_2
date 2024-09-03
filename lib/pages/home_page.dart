@@ -11,7 +11,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Tarefa> tarefas = [];
-  TextEditingController controllerTarefa = new TextEditingController();
+  TextEditingController controllerTarefa = TextEditingController();
 
   @override
   void initState() {
@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Lista de tarefas"),
+        title: const Text("Lista de tarefas"),
         centerTitle: true,
         backgroundColor: Colors.deepOrangeAccent,
       ),
@@ -40,23 +40,23 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                     child: TextField(
                   controller: controllerTarefa,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                       label: Text("Nova tarefa"),
                       hintText: "Digite sua tarefa aqui"),
                 )),
                 IconButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (controllerTarefa.text.isNotEmpty) {
+                        Tarefa tarefa = await Repositorio.adicionarTarefa(
+                            Tarefa(nome: controllerTarefa.text, 
+                            realizado: false));
                         setState(() {
-                          Tarefa tarefa = new Tarefa(
-                              nome: controllerTarefa.text, realizado: false);
                           tarefas.add(tarefa);
                         });
-                        Repositorio.salvarTudo(tarefas);
                         controllerTarefa.clear();
                       }
                       else{
-                        SnackBar snack = SnackBar(
+                        SnackBar snack = const SnackBar(
                             content: Text("Favor inserir um nome na tarefa"),
                         duration: Duration(seconds: 5),
                         backgroundColor: Colors.deepOrangeAccent,);
@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
                         ScaffoldMessenger.of(context).showSnackBar(snack);
                       }
                     },
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.add,
                     ))
               ],
@@ -84,46 +84,21 @@ class _HomePageState extends State<HomePage> {
   Widget _construtorLista(BuildContext context, int index) {
     return Dismissible(
       key: Key(DateTime.now().microsecondsSinceEpoch.toString()),
-      child: CheckboxListTile(
-        title: tarefas[index].realizado
-            ? Text(
-                tarefas[index].nome,
-                style: TextStyle(decoration: TextDecoration.lineThrough),
-              )
-            : Text(
-                tarefas[index].nome,
-              ),
-        value: tarefas[index].realizado,
-        onChanged: (checked) {
-          setState(() {
-            tarefas[index].realizado = checked!;
-          });
-          Repositorio.salvarTudo(tarefas);
-        },
-        secondary: tarefas[index].realizado
-            ? Icon(
-                Icons.verified,
-                color: Colors.green,
-              )
-            : Icon(
-                Icons.error,
-                color: Colors.red,
-              ),
-      ),
       onDismissed: (direction) {
         Tarefa tarefaRemovida=tarefas[index];
         int indiceTarefaRemovida=index;
         tarefas.remove(tarefas[index]);
-        Repositorio.salvarTudo(tarefas);
+        Repositorio.deletarTarefa(tarefaRemovida);
         SnackBar snack = SnackBar(
             backgroundColor: Colors.deepOrangeAccent,
             content: Text("Tarefa ${tarefaRemovida.nome} removida"),
             action: SnackBarAction(label: "Desfazer",
               onPressed: () {
               setState(() {
-                tarefas.insert(indiceTarefaRemovida, tarefaRemovida);
+                Repositorio.adicionarTarefa(tarefaRemovida).then((task) {
+                  tarefas.insert(indiceTarefaRemovida,task);
+                },);
               });
-              Repositorio.salvarTudo(tarefas);
             },
             ),
         );
@@ -131,17 +106,43 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(snack);
       },
       background: Container(
-        child: Align(
+        decoration: const BoxDecoration(color: Colors.red),
+        child: const Align(
+          alignment: Alignment.centerRight,
           child: Icon(
             Icons.delete,
             size: 50,
             color: Colors.white,
           ),
-          alignment: Alignment.centerRight,
         ),
-        decoration: BoxDecoration(color: Colors.red),
       ),
       direction: DismissDirection.endToStart,
+      child: CheckboxListTile(
+        title: tarefas[index].realizado
+            ? Text(
+                tarefas[index].nome,
+                style: const TextStyle(decoration: TextDecoration.lineThrough),
+              )
+            : Text(
+                tarefas[index].nome,
+              ),
+        value: tarefas[index].realizado,
+        onChanged: (checked) {
+          Repositorio.atualizarTarefa(tarefas[index]);
+          setState(() {
+            tarefas[index].realizado = checked!;
+          });
+        },
+        secondary: tarefas[index].realizado
+            ? const Icon(
+                Icons.verified,
+                color: Colors.green,
+              )
+            : const Icon(
+                Icons.error,
+                color: Colors.red,
+              ),
+      ),
     );
   }
 }
