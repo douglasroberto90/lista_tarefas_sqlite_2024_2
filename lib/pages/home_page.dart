@@ -94,11 +94,11 @@ class _HomePageState extends State<HomePage> {
             content: Text("Tarefa ${tarefaRemovida.nome} removida"),
             action: SnackBarAction(label: "Desfazer",
               onPressed: () {
-              setState(() {
                 Repositorio.adicionarTarefa(tarefaRemovida).then((task) {
-                  tarefas.insert(indiceTarefaRemovida,task);
+                  setState(() {
+                    tarefas.insert(indiceTarefaRemovida,task);
+                  });
                 },);
-              });
             },
             ),
         );
